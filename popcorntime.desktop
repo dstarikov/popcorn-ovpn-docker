@@ -6,6 +6,6 @@ Comment=Dockerized Popcorn Time through OpenVPN
 
 Path=/home/starikov/popcorn-ovpn-docker/
 Exec=/home/starikov/popcorn-ovpn-docker/start-popcorn
-Icon=Butter
-StartupWMClass=Butter
+Icon=Popcorn-Time
+StartupWMClass=Popcorn-Time
 Terminal=false
