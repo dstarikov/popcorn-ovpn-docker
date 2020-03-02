@@ -1,0 +1,9 @@
+#!/bin/bash
+. ./.env
+docker-compose kill popcorn
+sudo rm -rf $XAUTH
+xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
+chown 1000:1000 $XAUTH
+chmod 644 $XAUTH
+docker-compose up popcorn
+

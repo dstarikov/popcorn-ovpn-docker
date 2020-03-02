@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+
+Name=Popcorn Time
+Comment=Dockerized Popcorn Time through OpenVPN
+
+Path=/home/starikov/popcorn-ovpn-docker/
+Exec=/home/starikov/popcorn-ovpn-docker/start-popcorn
+Icon=Butter
+StartupWMClass=Butter
+Terminal=false
