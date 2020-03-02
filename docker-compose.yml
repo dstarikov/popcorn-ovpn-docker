@@ -2,16 +2,18 @@ version: '2'
 services:
   vpn:
     container_name: vpn
-    image: dceschmidt/openvpn-client
+    image: dceschmidt/openvpn-proxy
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun
     privileged: true
     restart: unless-stopped
+    networks:
+      - vpn_net
     ports:
       - "1022:22"
-      - "8888:8888"
+      - ${PROXY_PORT}:3128
     volumes:
       - /etc/localtime:/etc/localtime:ro
     environment:
@@ -20,14 +22,6 @@ services:
       OPENVPN_PASSWORD: ${OPENVPN_PASSWORD}
       OPENVPN_CONFIG: ${OPENVPN_CONFIG}
       OPENVPN_OPTS: "--inactive 3600 --ping 10 --ping-exit 60"
-      LOCAL_NETWORK: 100.115.92.200/28
-  tinyproxy:
-    container_name: tinyproxy
-    image: vimagick/tinyproxy
-    depends_on:
-      - vpn
-    network_mode: "service:vpn"
-    restart: unless-stopped
   popcorn:
     container_name: popcorn
     depends_on:
@@ -48,3 +42,9 @@ services:
       - /run/user/1000/pulse:/run/user/1000/pulse
       - /var/run/dbus:/var/run/dbus
       - ${POPCORN_DATA_DIR}:/home/${USERNAME}/.config/Popcorn-Time
+
+networks:
+  vpn_net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: vpn_bridge
