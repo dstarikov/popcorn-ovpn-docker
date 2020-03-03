@@ -1,7 +1,0 @@
-#!/bin/bash
-. ./.env
-sudo echo 1 > /proc/sys/net/ipv4/ip_forward
-sudo iptables -A FORWARD -i eth0 -p tcp --dport $PROXY_PORT -o vpn_bridge -j ACCEPT
-sudo iptables -A FORWARD -i vpn_bridge -o eth0 -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -t nat -A POSTROUTING -o vpn_bridge -j MASQUERADE
-docker-compose up vpn
