@@ -1,0 +1,38 @@
+#!/bin/bash
+# This script starts up the vpn using docker-compose
+. ./.env 2> /dev/null
+
+# Acquire sudo
+if [ $EUID != 0 ]; then
+    sudo "$0" "$@"
+    exit $?
+fi
+
+# trap ctrl-c and call ctrl_c() to exit vpn container
+trap ctrl_c INT
+function ctrl_c() {
+  echo "shutting down vpn service"
+	docker-compose stop vpn
+}
+
+docker-compose up vpn &
+
+# Enable IPv4 forwarding
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+sleep 10
+
+# forward incoming connections on proxy port to vpn bridge
+iptables -A FORWARD -i eth0 -p tcp --dport $PROXY_PORT -o $VPN_BRIDGE_NAME -j ACCEPT
+iptables -A FORWARD -i eth0 -p tcp --dport $TRANSMISSION_PORT -o $VPN_BRIDGE_NAME -j ACCEPT
+iptables -A FORWARD -i $VPN_BRIDGE_NAME -o eth0 -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -t nat -A POSTROUTING -o $VPN_BRIDGE_NAME -j MASQUERADE
+
+# Wait for VPN container to exit
+docker wait vpn
+
+echo "vpn shutdown, cleaning up iptables"
+iptables -D FORWARD -i eth0 -p tcp --dport $PROXY_PORT -o $VPN_BRIDGE_NAME -j ACCEPT
+iptables -D FORWARD -i eth0 -p tcp --dport $TRANSMISSION_PORT -o $VPN_BRIDGE_NAME -j ACCEPT
+iptables -D FORWARD -i $VPN_BRIDGE_NAME -o eth0 -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -t nat -D POSTROUTING -o $VPN_BRIDGE_NAME -j MASQUERADE

@@ -2,28 +2,30 @@ version: '2'
 services:
   vpn:
     container_name: vpn
-    image: dceschmidt/openvpn-client
+    #image: dceschmidt/openvpn-client
+    image: haugene/transmission-openvpn
     cap_add:
       - NET_ADMIN
-    devices:
-      - /dev/net/tun
     privileged: true
+    devices:
+    - /dev/net/tun
     restart: unless-stopped
     ports:
-      - ${PROXY_PORT}:8888
+      - ${PROXY_PORT}:${PROXY_PORT}
+      - ${TRANSMISSION_PORT}:9091
     volumes:
       - /etc/localtime:/etc/localtime:ro
+      - ${TRANSMISSION_TORRENTS_DIR}:/data
     environment:
+      CREATE_TUN_DEVICE: 'true'
       OPENVPN_PROVIDER: ${OPENVPN_PROVIDER}
       OPENVPN_USERNAME: ${OPENVPN_USERNAME}
       OPENVPN_PASSWORD: ${OPENVPN_PASSWORD}
       OPENVPN_CONFIG: ${OPENVPN_CONFIG}
       OPENVPN_OPTS: "--inactive 3600 --ping 10 --ping-exit 60"
-  tinyproxy:
-    container_name: tinyproxy
-    image: vimagick/tinyproxy
-    restart: unless-stopped
-    network_mode: "service:vpn"
+      WEBPROXY_ENABLED: 'true'
+      WEBPROXY_PORT: ${PROXY_PORT}
+      LOCAL_NETWORK: 100.115.92.200/28
   popcorn:
     container_name: popcorn
     depends_on:
@@ -46,3 +48,10 @@ services:
       - /run/user/1000/pulse:/run/user/1000/pulse
       - /var/run/dbus:/var/run/dbus
       - /dev/dri:/dev/dri
+networks:
+  default:
+    driver: bridge
+    ipam:
+     driver: default
+    driver_opts:
+      com.docker.network.bridge.name: ${VPN_BRIDGE_NAME}
